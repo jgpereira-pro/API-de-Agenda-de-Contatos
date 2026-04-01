@@ -1,42 +1,43 @@
-import conexao from '../../../infra/conexao.js'
+import { prisma } from '../lib/prisma.js';
 
-class ContatosRepository {
-consulta(sql, valores = '', mensagemReject = 'Erro') {
-    return new Promise((resolve, reject) => {
-        conexao.query(sql, valores, (erro, resultado) => {
-            if (erro) {
-                return reject(erro); 
-            }
-            return resolve(resultado);
-        });
+export const ContatosRepository = {
+  async criar(dados) {
+    return await prisma.contact.create({
+      data: {
+        name: dados.name,
+        email: dados.email,
+        phone: dados.phone,
+      },
     });
-}
+  },
 
-    create(selecao) {
-        const sql = "INSERT INTO dbagenda.contatos SET ?;"
-        return this.consulta(sql, selecao, 'Não foi possivel cadastrar contato')
-    }
+  async listarTodos() {
+    return await prisma.contact.findMany({
+      orderBy: { name: 'asc' },
+    });
+  },
+
+  async buscarPorId(id) {
+    const contato = await prisma.contact.findUnique({
+      where: { id: Number(id) },
+    });
     
-    findAll() {
-        const sql = "SELECT * FROM dbagenda.contatos;"
-        return this.consulta(sql, '', 'Não foi possivel listar os contatos')
+    if (!contato) {
+      throw new Error('Contato não encontrado');
     }
-    
-    findById(id) {
-        const sql = "SELECT * FROM dbagenda.contatos WHERE id=?;"
-        return this.consulta(sql, id, 'Não foi possivel localizar os contatos')
-    }
-    
+    return contato;
+  },
 
-    update(selecao, id) {
-        const sql = "UPDATE dbagenda.contatos SET ? WHERE id=?;"
-        return this.consulta(sql, [selecao, id], 'Não foi possivel atualizar o contato')
-    }
+  async atualizar(id, dados) {
+    return await prisma.contact.update({
+      where: { id: Number(id) },
+      data: dados,
+    });
+  },
 
-    delete(id) {
-        const sql = "DELETE FROM dbagenda.contatos WHERE id=?;"
-        return this.consulta(sql, id, 'Não foi possivel deletar o contato')
-    }
-}
-
-export default new ContatosRepository()
+  async excluir(id) {
+    return await prisma.contact.delete({
+      where: { id: Number(id) },
+    });
+  }
+};
